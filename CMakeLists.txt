@@ -8,14 +8,17 @@ find_package(ament_cmake_python REQUIRED)
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 find_package(PythonLibs 3 REQUIRED)
 find_package(pybind11 REQUIRED)
+find_package(TBB REQUIRED)
+list(APPEND CMAKE_MODULE_PATH "/usr/include/tbb/")
 
-pybind11_add_module(octree init.cpp)
-target_include_directories(octree INTERFACE Octree)
-ament_target_dependencies(octree INTERFACE
+pybind11_add_module(octree_py src/octree_py.cpp)
+target_include_directories(octree_py PUBLIC Octree)
+ament_target_dependencies(octree_py PUBLIC
   pybind11
   Python3
 )
-set_target_properties(octree PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(octree_py PUBLIC TBB::tbb)
+set_target_properties(octree_py PROPERTIES LINKER_LANGUAGE CXX)
 
 # Add a hook for colcon to add the Python library directory to the PYTHONPATH environment variable
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/share/${PROJECT_NAME}/hook/python_path.dsv
@@ -23,11 +26,8 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/share/${PROJECT_NAME}/hook/python_path.ds
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/share/${PROJECT_NAME}/hook/python_path.dsv
         DESTINATION share/${PROJECT_NAME}/hook)
 
-install(FILES Octree/octree.h DESTINATION include/)
-install(FILES Octree/octree_container.h DESTINATION include/)
-
 install(
-  TARGETS octree
+  TARGETS octree_py
   DESTINATION lib/python3/dist-packages/${PROJECT_NAME}
 )
 
